@@ -1,5 +1,5 @@
 const plans = [
-  { name: 'FREE', price: '€0', description: 'For personal testing and small usage.', features: ['1 workspace', 'Basic AI chat', 'Community support'] },
+  { name: 'FREE', price: '€0', description: 'For personal use and small daily usage.', features: ['1 workspace', 'Basic AI chat', 'Community support'] },
   { name: 'PRO', price: '€19', description: 'For teams that need faster usage and priority access.', features: ['Unlimited chats', 'Priority AI responses', 'Usage insights'] },
   { name: 'TEAM', price: '€49', description: 'For departments and shared workspaces.', features: ['Shared workspace', 'Admin controls', 'Team billing'] },
 ];

@@ -6,8 +6,14 @@ create table if not exists public."User" (
   "passwordHash" text not null,
   role text not null default 'USER',
   plan text not null default 'FREE',
+  "profileName" text,
+  "profileImage" text,
   "createdAt" timestamptz not null default now()
 );
+
+alter table public."User"
+  add column if not exists "profileName" text,
+  add column if not exists "profileImage" text;
 
 create table if not exists public."Usage" (
   id text primary key,

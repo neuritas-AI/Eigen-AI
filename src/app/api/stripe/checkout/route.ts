@@ -10,6 +10,6 @@ export async function POST() {
 
   return NextResponse.json({
     url: '/pricing',
-    message: 'Stripe checkout is not configured in this demo build.',
+    message: 'Stripe checkout is not configured yet. Please use the pricing page to review available plans.',
   });
 }

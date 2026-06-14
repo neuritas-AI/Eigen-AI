@@ -3,8 +3,8 @@ import bcrypt from 'bcryptjs';
 
 import { prisma } from '@/lib/prisma';
 
-const DEMO_ADMIN_EMAIL = 'chat@neuritas-ai.com';
-const DEMO_ADMIN_FALLBACK_PASSWORD = process.env.DEMO_ADMIN_PASSWORD || 'NeuritasAdmin2026!';
+const DEFAULT_ADMIN_EMAIL = 'chat@neuritas-ai.com';
+const DEFAULT_ADMIN_FALLBACK_PASSWORD = process.env.DEMO_ADMIN_PASSWORD || 'NeuritasAdmin2026!';
 const IS_VERCEL_PRODUCTION = process.env.VERCEL === '1' || process.env.NODE_ENV === 'production';
 const AUTH_ALLOW_DEMO_ADMIN = true;
 
@@ -19,6 +19,8 @@ function createDemoAdminUser(email: string) {
     email,
     role: 'ADMIN',
     plan: 'TEAM',
+    name: email,
+    image: null,
   };
 }
 
@@ -39,32 +41,19 @@ export const authOptions = {
         const email = String(credentials.email).toLowerCase();
         const password = String(credentials.password);
 
-        if (email === DEMO_ADMIN_EMAIL) {
-          if (AUTH_ALLOW_DEMO_ADMIN) {
-            return createDemoAdminUser(email);
-          }
-
-          if (IS_VERCEL_PRODUCTION) {
-            return createDemoAdminUser(email);
-          }
-
-          if (password === DEMO_ADMIN_FALLBACK_PASSWORD) {
-            return createDemoAdminUser(email);
-          }
-
-          if (!process.env.DATABASE_URL) {
-            return null;
-          }
-
+        if (email === DEFAULT_ADMIN_EMAIL) {
           try {
             let user = await prisma.user.findUnique({ where: { email } });
 
             if (!user) {
+              if (password !== DEFAULT_ADMIN_FALLBACK_PASSWORD) {
+                return null;
+              }
+
               const passwordHash = await bcrypt.hash(password, 10);
               user = await prisma.user.create({
                 data: { email, passwordHash, role: 'ADMIN', plan: 'TEAM' },
               });
-              return { id: user.id, email: user.email, role: user.role, plan: user.plan };
             }
 
             const valid = await bcrypt.compare(password, user.passwordHash);
@@ -79,10 +68,17 @@ export const authOptions = {
               });
             }
 
-            return { id: user.id, email: user.email, role: user.role, plan: user.plan };
+            return {
+              id: user.id,
+              email: user.email,
+              role: user.role,
+              plan: user.plan,
+              name: user.profileName || user.email,
+              image: user.profileImage || null,
+            };
           } catch (error) {
             if (isDatabaseUnavailable(error)) {
-              return createDemoAdminUser(email);
+              return null;
             }
 
             throw error;
@@ -112,6 +108,8 @@ export const authOptions = {
       if (user) {
         token.role = user.role;
         token.plan = user.plan;
+        token.name = user.name || user.email;
+        token.picture = user.image || null;
       }
       return token;
     },
@@ -120,6 +118,8 @@ export const authOptions = {
         session.user.id = token.sub;
         session.user.role = token.role;
         session.user.plan = token.plan;
+        session.user.name = (token.name as string) || session.user.email;
+        session.user.image = (token.picture as string) || null;
       }
       return session;
     },

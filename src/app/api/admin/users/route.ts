@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { supabase } from '@/lib/supabase';
 
 export async function GET() {
   const session: any = await auth();
@@ -45,14 +46,38 @@ export async function POST(request: Request) {
     }
 
     const passwordHash = await bcrypt.hash(String(password), 10);
-    const user = await prisma.user.create({
-      data: { email, passwordHash, role, plan },
-      select: { id: true, email: true, role: true, plan: true },
-    });
 
-    return NextResponse.json({ ok: true, user }, { status: 201 });
+    try {
+      const user = await prisma.user.create({
+        data: { email, passwordHash, role, plan },
+        select: { id: true, email: true, role: true, plan: true },
+      });
+
+      return NextResponse.json({ ok: true, user }, { status: 201 });
+    } catch (prismaError) {
+      const fallback = await supabase.from('User').insert([
+        { id: crypto.randomUUID(), email, passwordHash, role, plan, createdAt: new Date().toISOString() },
+      ]).select('id, email, role, plan').single();
+
+      if (fallback.error || !fallback.data) {
+        throw prismaError;
+      }
+
+      return NextResponse.json({ ok: true, user: fallback.data, source: 'supabase' }, { status: 201 });
+    }
   } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    const isDatabaseIssue = /Can't reach database server|P1001|ECONNREFUSED|ENOTFOUND|ETIMEDOUT|Connection terminated unexpectedly/i.test(message);
+
     console.error('Failed to create user:', error);
-    return NextResponse.json({ error: 'Unable to create user right now.' }, { status: 500 });
+
+    return NextResponse.json(
+      {
+        error: isDatabaseIssue
+          ? 'Database connection failed. Update the Supabase user table schema and retry.'
+          : 'Unable to create user right now.',
+      },
+      { status: 500 },
+    );
   }
 }

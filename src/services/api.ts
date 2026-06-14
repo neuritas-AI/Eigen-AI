@@ -11,7 +11,7 @@ export type ChatResponse = { response: string; };
 function fallbackResponse(reason: string): ChatResponse {
   return {
     response:
-      'The AI backend is temporarily unavailable, but the chat is still available in demo mode. You can continue testing the interface and admin flow; once the backend is reachable, the same prompt will use the real model response.',
+      'The AI backend is temporarily unavailable. The chat interface is still available, and the same prompt will use the live model response as soon as the backend is reachable.',
   };
 }
 

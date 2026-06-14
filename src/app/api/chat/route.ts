@@ -4,14 +4,14 @@ import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { getRateLimiter } from '@/lib/rate-limit';
 
-function createDemoResponse(message: string) {
+function createFallbackResponse(message: string) {
   const normalized = message.trim().replace(/\s+/g, ' ');
 
   if (!normalized) {
-    return 'Demo AI is ready. Ask me anything and I will respond in the chat interface.';
+    return 'The AI backend is currently unavailable. Please try again in a moment.';
   }
 
-  return `Demo AI response: I received your prompt, "${normalized}". The chat interface is active and ready for testing. If the external model endpoint is reachable, the same prompt will use the real model response automatically.`;
+  return `The AI backend is currently unavailable, but your prompt was received: "${normalized}". Please try again when the live model endpoint is reachable.`;
 }
 
 export async function POST(request: Request) {
@@ -83,7 +83,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ response: answer });
   } catch {
-    const answer = createDemoResponse(message);
+    const answer = createFallbackResponse(message);
 
     await prisma.conversation.create({
       data: {
