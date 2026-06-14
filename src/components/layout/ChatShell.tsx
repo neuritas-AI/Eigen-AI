@@ -14,7 +14,8 @@ import ChatWindow from '@/components/chat/ChatWindow';
 export default function ChatShell() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const { data: session } = useSession();
-  const isAdmin = session?.user?.role === 'ADMIN' || session?.user?.email === 'chat@neuritas-ai.com';
+  const user = session?.user as { email?: string | null; role?: string } | undefined;
+  const isAdmin = user?.role === 'ADMIN' || user?.email === 'chat@neuritas-ai.com';
   const { conversations, selectedConversationId, createConversation, selectConversation, addMessage, setLoading, input, setInput, clearConversation } = useChatStore();
 
   useEffect(() => {

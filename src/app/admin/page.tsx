@@ -5,7 +5,8 @@ import { useSession } from 'next-auth/react';
 
 export default function AdminPage() {
   const { data: session } = useSession();
-  const isAdmin = session?.user?.role === 'ADMIN' || session?.user?.email === 'chat@neuritas-ai.com';
+  const user = session?.user as { email?: string | null; role?: string } | undefined;
+  const isAdmin = user?.role === 'ADMIN' || user?.email === 'chat@neuritas-ai.com';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('USER');
