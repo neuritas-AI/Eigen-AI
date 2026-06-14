@@ -7,9 +7,9 @@ export const metadata = {
   title: 'Neuritas-AI',
   description: 'Premium AI chat experience for enterprise use.',
   icons: {
-    icon: '/icon.svg',
-    shortcut: '/icon.svg',
-    apple: '/icon.svg',
+    icon: '/favicon.svg',
+    shortcut: '/favicon.svg',
+    apple: '/favicon.svg',
   },
 };
 

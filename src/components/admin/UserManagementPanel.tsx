@@ -26,26 +26,30 @@ export default function UserManagementPanel() {
     setMessage('');
     setLoading(true);
 
-    const res = await fetch('/api/admin/users', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, role, plan }),
-    });
+    try {
+      const res = await fetch('/api/admin/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, role, plan }),
+      });
 
-    const data = await res.json();
-    setLoading(false);
+      const data = await res.json().catch(() => ({}));
 
-    if (!res.ok) {
-      setMessage(data.error || 'Unable to create user.');
-      return;
+      if (!res.ok) {
+        throw new Error(data.error || 'Unable to create user.');
+      }
+
+      setMessage(`User created: ${email}`);
+      setEmail('');
+      setPassword('');
+      setRole('USER');
+      setPlan('FREE');
+      await loadUsers();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Unable to create user.');
+    } finally {
+      setLoading(false);
     }
-
-    setMessage(`User created: ${email}`);
-    setEmail('');
-    setPassword('');
-    setRole('USER');
-    setPlan('FREE');
-    await loadUsers();
   }
 
   return (
