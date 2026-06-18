@@ -44,7 +44,7 @@ export default function ChatWindow({ onSend, onRegenerate, onClear }: { onSend: 
         {!selectedConversation || selectedConversation.messages.length === 0 ? (
           <motion.section initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} className="mx-auto flex h-full max-w-4xl flex-col items-center justify-center text-center">
             <div className="rounded-3xl border border-white/10 bg-white/5 p-8 shadow-glow backdrop-blur-xl">
-              <p className="text-xs uppercase tracking-[0.35em] text-brand-purple">Neuritas-AI</p>
+              <p className="text-xs uppercase tracking-[0.35em] text-brand-purple">Brainz</p>
               <h2 className="mt-4 text-3xl font-semibold text-brand-text">Your Enterprise AI Assistant</h2>
               <p className="mt-3 max-w-xl text-brand-muted">Powered by Neuritas-AI, built for premium AI workflows, fast answers, and secure enterprise-grade chat experiences.</p>
               <div className="mt-6 grid gap-3 md:grid-cols-2">
@@ -70,7 +70,7 @@ export default function ChatWindow({ onSend, onRegenerate, onClear }: { onSend: 
                 className={message.role === 'user' ? 'ml-auto max-w-[85%] rounded-3xl border border-brand-blue/30 bg-gradient-to-br from-brand-blue/15 to-brand-purple/15 p-4 text-brand-text shadow-glow' : 'mr-auto max-w-[90%] rounded-3xl border border-white/10 bg-white/5 p-4 text-brand-text shadow-lg backdrop-blur-xl'}
               >
                 <div className="mb-3 flex items-center justify-between gap-3 text-xs uppercase tracking-[0.2em] text-brand-muted">
-                  <span>{message.role === 'user' ? 'You' : 'Neuritas AI'}</span>
+                  <span>{message.role === 'user' ? 'You' : 'Brainz'}</span>
                   {message.role === 'assistant' && (
                     <button onClick={() => copyMessage(message.content, message.id)} className="rounded-full border border-white/10 bg-white/5 p-2 hover:bg-white/10">{copiedId === message.id ? <Sparkles size={14} /> : <Copy size={14} />}</button>
                   )}
@@ -96,7 +96,7 @@ export default function ChatWindow({ onSend, onRegenerate, onClear }: { onSend: 
                 onSend(input);
               }
             }}
-            placeholder="Ask Neuritas-AI anything..."
+            placeholder="Ask Brainz anything..."
             rows={1}
             disabled={isLoading}
             className="max-h-36 min-h-[56px] w-full resize-none rounded-2xl bg-transparent px-3 py-3 text-sm text-brand-text outline-none placeholder:text-brand-muted disabled:cursor-not-allowed"
@@ -108,7 +108,7 @@ export default function ChatWindow({ onSend, onRegenerate, onClear }: { onSend: 
               disabled={isLoading || !input.trim()}
               className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-brand-blue to-brand-purple px-4 py-2 text-sm font-semibold text-white shadow-glow disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {isLoading ? 'Thinking...' : 'Send'} <Send size={14} />
+              {isLoading ? 'Brainz is thinking...' : 'Send'} <Send size={14} />
             </button>
           </div>
         </div>
@@ -120,8 +120,8 @@ export default function ChatWindow({ onSend, onRegenerate, onClear }: { onSend: 
 function TypingIndicator() {
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mr-auto max-w-[90%] rounded-3xl border border-white/10 bg-white/5 p-4 backdrop-blur-xl">
-      <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-brand-muted">Neuritas AI <span className="inline-flex gap-1"><span className="h-2 w-2 rounded-full bg-brand-blue animate-bounce" /> <span className="h-2 w-2 rounded-full bg-brand-purple animate-bounce [animation-delay:120ms]" /> <span className="h-2 w-2 rounded-full bg-brand-blue animate-bounce [animation-delay:240ms]" /></span></div>
-      <div className="mt-2 text-sm text-brand-muted">Thinking through your request...</div>
+      <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-brand-muted">Brainz <span className="inline-flex gap-1"><span className="h-2 w-2 rounded-full bg-brand-blue animate-bounce" /> <span className="h-2 w-2 rounded-full bg-brand-purple animate-bounce [animation-delay:120ms]" /> <span className="h-2 w-2 rounded-full bg-brand-blue animate-bounce [animation-delay:240ms]" /></span></div>
+      <div className="mt-2 text-sm text-brand-muted">Brainz is thinking through your request...</div>
     </motion.div>
   );
 }

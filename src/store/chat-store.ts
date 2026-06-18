@@ -75,6 +75,6 @@ export const useChatStore = create<ChatStore>()(
         }));
       },
     }),
-    { name: 'neuritas-ai-chat-store' }
+    { name: 'brainz-chat-store' }
   )
 );

@@ -22,9 +22,10 @@ export default async function SettingsPage() {
       <div className="p-6">
         <div className="mx-auto flex max-w-6xl flex-col gap-6 rounded-3xl border border-white/10 bg-white/5 p-8 shadow-glow">
         <p className="text-xs uppercase tracking-[0.35em] text-brand-muted">Settings</p>
-        <h1 className="text-2xl font-semibold">Admin settings</h1>
-        <p className="text-slate-300">Manage users, roles, and account setup here.</p>
+        <h1 className="text-2xl font-semibold">Brainz Settings</h1>
+        <p className="text-slate-300">Manage Brainz users, roles, and account setup here.</p>
         <UserManagementPanel />
+        <p className="text-sm text-brand-muted">Brainz is developed and maintained by Neuritas-AI.</p>
         </div>
       </div>
     </main>

@@ -97,7 +97,7 @@ export default function ChatShell() {
             <button onClick={() => setSidebarOpen((prev) => !prev)} className="rounded-xl border border-white/10 bg-white/5 p-2 text-brand-muted hover:text-brand-text">
               {sidebarOpen ? <PanelLeftClose size={18} /> : <PanelLeftOpen size={18} />}
             </button>
-            {sidebarOpen && <div className="flex items-center gap-2 text-sm font-semibold"><Sparkles className="text-brand-purple" size={18} />Neuritas-AI</div>}
+            {sidebarOpen && <div className="flex items-center gap-2 text-sm font-semibold"><Sparkles className="text-brand-purple" size={18} />Brainz</div>}
           </div>
 
           <button
@@ -133,6 +133,7 @@ export default function ChatShell() {
             {isAdmin ? (
               <Link href="/settings" className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 p-3 text-sm text-brand-muted hover:text-brand-text"><Settings size={16} /> {sidebarOpen ? 'Settings' : ''}</Link>
             ) : null}
+            {sidebarOpen && <p className="text-xs text-brand-muted">Powered by Neuritas-AI</p>}
           </div>
         </motion.aside>
 
@@ -144,7 +145,7 @@ export default function ChatShell() {
                   <Menu size={18} />
                 </button>
                 <div>
-                  <p className="text-xs uppercase tracking-[0.35em] text-brand-muted">Neuritas-AI</p>
+                  <p className="text-xs uppercase tracking-[0.35em] text-brand-muted">Brainz</p>
                   <h1 className="text-xl font-semibold">Enterprise AI Assistant</h1>
                 </div>
               </div>
@@ -170,7 +171,7 @@ export default function ChatShell() {
         {sidebarOpen && (
           <motion.aside initial={{ x: -320 }} animate={{ x: 0 }} exit={{ x: -320 }} className="fixed inset-y-4 left-4 z-50 flex w-72 flex-col rounded-3xl border border-white/10 bg-slate-950/95 p-4 shadow-glow backdrop-blur-xl lg:hidden">
             <div className="flex items-center justify-between border-b border-white/10 pb-4">
-              <div className="flex items-center gap-2 text-sm font-semibold"><Sparkles className="text-brand-purple" size={18} />Neuritas-AI</div>
+              <div className="flex items-center gap-2 text-sm font-semibold"><Sparkles className="text-brand-purple" size={18} />Brainz</div>
               <button onClick={() => setSidebarOpen(false)} className="rounded-xl border border-white/10 bg-white/5 p-2 text-brand-muted">✕</button>
             </div>
             <button onClick={() => createConversation()} className="mt-4 flex items-center gap-2 rounded-2xl border border-brand-blue/50 bg-gradient-to-r from-brand-blue/20 to-brand-purple/20 p-3 text-sm font-semibold text-brand-text"> <Plus size={16} /> New Chat </button>

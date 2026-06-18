@@ -4,8 +4,8 @@ import { Toaster } from 'sonner';
 import SessionProvider from '@/components/providers/SessionProvider';
 
 export const metadata = {
-  title: 'Neuritas-AI',
-  description: 'Premium AI chat experience for enterprise use.',
+  title: 'Brainz | AI Assistant',
+  description: 'Brainz is an intelligent AI assistant powered by Neuritas-AI.',
   icons: {
     icon: '/favicon.svg',
     shortcut: '/favicon.svg',

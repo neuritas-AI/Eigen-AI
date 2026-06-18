@@ -1,6 +1,6 @@
-# Neuritas-AI Frontend
+# Brainz Frontend
 
-A premium AI chat frontend built with Next.js 15, TypeScript, Tailwind CSS, Framer Motion, Zustand, React Markdown, and Sonner.
+A premium AI chat frontend for Brainz, developed by Neuritas-AI, built with Next.js 15, TypeScript, Tailwind CSS, Framer Motion, Zustand, React Markdown, and Sonner.
 
 ## Run locally
 
