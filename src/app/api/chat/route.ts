@@ -20,8 +20,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { message } = await request.json();
-  if (!message || typeof message !== 'string') {
+  const body = await request.json();
+  const message = typeof body.message === 'string' ? body.message : '';
+  const conversationId = typeof body.conversationId === 'string' ? body.conversationId : undefined;
+  const modelKey = typeof body.modelKey === 'string' ? body.modelKey : 'brainz_local';
+  const projectId = typeof body.projectId === 'string' ? body.projectId : undefined;
+
+  if (!message) {
     return NextResponse.json({ error: 'Message is required' }, { status: 400 });
   }
 
@@ -32,7 +37,7 @@ export async function POST(request: Request) {
 
   const limiter = getRateLimiter(user.plan);
   const identifier = `user:${user.id}`;
-  const { success, limit, remaining, reset } = await limiter.limit(identifier);
+  const { success } = await limiter.limit(identifier);
   if (!success) {
     return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 });
   }
@@ -52,16 +57,39 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 });
   }
 
+  let modelProvider = await prisma.modelProvider.findUnique({ where: { key: modelKey } });
+  if (!modelProvider || !modelProvider.active) {
+    modelProvider = await prisma.modelProvider.findFirst({ where: { key: 'brainz_local' } });
+  }
+
+  const actualModelKey = modelProvider?.key ?? 'brainz_local';
+  const creditsUsed = modelProvider?.pricePerMsg ?? 1;
+
+  const project = projectId
+    ? await prisma.project.findUnique({ where: { id: projectId } })
+    : null;
+
+  const projectContext = project?.instructions || project?.description || '';
+  const prompt = projectContext
+    ? `Project context: ${projectContext}\n\n${message}`
+    : message;
+
   const ollamaUrl = process.env.OLLAMA_URL || process.env.NEXT_PUBLIC_API_URL;
   if (!ollamaUrl) {
     return NextResponse.json({ response: 'AI backend is not configured.' }, { status: 200 });
   }
 
+  let conversation = conversationId
+    ? await prisma.conversation.findFirst({ where: { id: conversationId, userId: user.id } })
+    : null;
+
+  const recordMessages = conversation ? JSON.parse(conversation.messages) : [];
+
   try {
     const response = await fetch(`${ollamaUrl.replace(/\/+$/, '')}/api/generate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: 'llama3', prompt: message, stream: false }),
+      body: JSON.stringify({ model: actualModelKey === 'brainz_local' ? 'llama3' : actualModelKey, prompt, stream: false }),
     });
 
     if (!response.ok) {
@@ -71,27 +99,84 @@ export async function POST(request: Request) {
     const data = await response.json();
     const answer = data.response || 'No response returned.';
 
-    await prisma.conversation.create({
+    const updatedMessages = [
+      ...recordMessages,
+      { role: 'user', content: message },
+      { role: 'assistant', content: answer },
+    ];
+
+    if (conversation) {
+      await prisma.conversation.update({
+        where: { id: conversation.id },
+        data: {
+          messages: JSON.stringify(updatedMessages),
+          modelKey: actualModelKey,
+          projectId,
+        },
+      });
+    } else {
+      await prisma.conversation.create({
+        data: {
+          id: conversationId ?? crypto.randomUUID(),
+          userId: user.id,
+          messages: JSON.stringify(updatedMessages),
+          modelKey: actualModelKey,
+          projectId,
+        },
+      });
+    }
+
+    await prisma.usageLog.create({
       data: {
         userId: user.id,
-        messages: JSON.stringify([
-          { role: 'user', content: message },
-          { role: 'assistant', content: answer },
-        ]),
+        modelKey: actualModelKey,
+        prompt: message,
+        response: answer,
+        creditsUsed,
+        tokensUsed: null,
+        projectId,
       },
     });
 
-    return NextResponse.json({ response: answer });
+    return NextResponse.json({ response: answer, conversationId: conversation?.id ?? conversationId });
   } catch {
     const answer = createFallbackResponse(message);
+    const updatedMessages = [
+      ...recordMessages,
+      { role: 'user', content: message },
+      { role: 'assistant', content: answer },
+    ];
 
-    await prisma.conversation.create({
+    if (conversation) {
+      await prisma.conversation.update({
+        where: { id: conversation.id },
+        data: {
+          messages: JSON.stringify(updatedMessages),
+          modelKey: actualModelKey,
+          projectId,
+        },
+      });
+    } else {
+      await prisma.conversation.create({
+        data: {
+          id: conversationId ?? crypto.randomUUID(),
+          userId: user.id,
+          messages: JSON.stringify(updatedMessages),
+          modelKey: actualModelKey,
+          projectId,
+        },
+      });
+    }
+
+    await prisma.usageLog.create({
       data: {
         userId: user.id,
-        messages: JSON.stringify([
-          { role: 'user', content: message },
-          { role: 'assistant', content: answer },
-        ]),
+        modelKey: actualModelKey,
+        prompt: message,
+        response: answer,
+        creditsUsed,
+        tokensUsed: null,
+        projectId,
       },
     });
 

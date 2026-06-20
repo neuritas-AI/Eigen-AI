@@ -8,17 +8,21 @@ datasource db {
 }
 
 model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
-  passwordHash String
-  role         String   @default("USER")
-  plan         String   @default("FREE")
-  profileName  String?
-  profileImage String?
-  createdAt    DateTime @default(now())
+  id                 String              @id @default(cuid())
+  email              String              @unique
+  passwordHash       String
+  role               String              @default("USER")
+  plan               String              @default("FREE")
+  profileName        String?
+  profileImage       String?
+  createdAt          DateTime            @default(now())
 
-  usage        Usage[]
-  conversations Conversation[]
+  usage              Usage[]
+  conversations      Conversation[]
+  subscriptions      Subscription[]
+  creditTransactions CreditTransaction[]
+  usageLogs          UsageLog[]
+  projects           Project[]
 }
 
 model Usage {
@@ -33,10 +37,99 @@ model Usage {
   @@unique([userId, month])
 }
 
-model Conversation {
+model Subscription {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan       String
+  credits    Int      @default(0)
+  status     String   @default("ACTIVE")
+  startedAt  DateTime @default(now())
+  expiresAt  DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model CreditTransaction {
   id        String   @id @default(cuid())
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  messages  String
+  amount    Int
+  type      String
+  reason    String?
   createdAt DateTime @default(now())
+}
+
+model ModelProvider {
+  id            String   @id @default(cuid())
+  key           String   @unique
+  name          String
+  active        Boolean  @default(true)
+  priority      Int      @default(0)
+  pricePerMsg   Int      @default(1)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Project {
+  id           String    @id @default(cuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name         String
+  color        String
+  description  String?
+  instructions String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  chats        ProjectChat[]
+  conversations Conversation[] @relation("ProjectConversations")
+  settings     ProjectSetting?
+}
+
+model ProjectChat {
+  id             String      @id @default(cuid())
+  projectId      String
+  project        Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  conversationId String?      @unique
+  conversation   Conversation? @relation("ProjectChatConversation", fields: [conversationId], references: [id], onDelete: Cascade)
+  title          String
+  modelKey       String
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+}
+
+model ProjectSetting {
+  id             String   @id @default(cuid())
+  projectId      String   @unique
+  project        Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  allowSharing   Boolean  @default(false)
+  customHint     String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model UsageLog {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  modelKey      String
+  prompt       String
+  response     String?
+  creditsUsed  Int
+  tokensUsed   Int?
+  projectId    String?
+  createdAt    DateTime @default(now())
+}
+
+model Conversation {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages   String
+  modelKey   String   @default("brainz_local")
+  projectId  String?
+  project    Project? @relation("ProjectConversations", fields: [projectId], references: [id], onDelete: Cascade)
+  projectChat ProjectChat? @relation("ProjectChatConversation")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now())
 }

@@ -1,12 +1,14 @@
 import axios from 'axios';
 
+import type { ModelKey } from '@/types';
+
 const api = axios.create({
   baseURL: '',
   timeout: 120000,
 });
 
-export type ChatRequest = { message: string; };
-export type ChatResponse = { response: string; };
+export type ChatRequest = { message: string; modelKey?: ModelKey; projectId?: string; conversationId?: string };
+export type ChatResponse = { response: string; conversationId?: string };
 
 function fallbackResponse(reason: string): ChatResponse {
   return {
@@ -15,15 +17,9 @@ function fallbackResponse(reason: string): ChatResponse {
   };
 }
 
-export async function postChatMessage(message: string) {
-  const backendUrl = process.env.NEXT_PUBLIC_API_URL?.trim();
-
-  if (!backendUrl) {
-    return fallbackResponse('NEXT_PUBLIC_API_URL is not configured');
-  }
-
+export async function postChatMessage(message: string, modelKey?: ModelKey, projectId?: string, conversationId?: string) {
   try {
-    const { data } = await api.post<ChatResponse>('/api/chat', { message } as ChatRequest);
+    const { data } = await api.post<ChatResponse>('/api/chat', { message, modelKey, projectId, conversationId } as ChatRequest);
     return data;
   } catch (error: any) {
     const status = error?.response?.status;
