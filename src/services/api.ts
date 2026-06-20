@@ -7,11 +7,13 @@ const api = axios.create({
   timeout: 120000,
 });
 
-export type ChatRequest = { message: string; modelKey?: ModelKey; projectId?: string; conversationId?: string };
-export type ChatResponse = { response: string; conversationId?: string };
+export type ChatRequest = { message: string; modelKey?: ModelKey; model?: string; projectId?: string; conversationId?: string };
+export type ChatResponse = { response: string; conversationId?: string; success?: boolean; error?: string };
 
 function fallbackResponse(reason: string): ChatResponse {
   return {
+    success: false,
+    error: reason,
     response:
       'The AI backend is temporarily unavailable. The chat interface is still available, and the same prompt will use the live model response as soon as the backend is reachable.',
   };
@@ -19,7 +21,14 @@ function fallbackResponse(reason: string): ChatResponse {
 
 export async function postChatMessage(message: string, modelKey?: ModelKey, projectId?: string, conversationId?: string) {
   try {
-    const { data } = await api.post<ChatResponse>('/api/chat', { message, modelKey, projectId, conversationId } as ChatRequest);
+    const modelMap: Record<ModelKey, string> = {
+      brainz_local: 'brainz-local',
+      gpt5: 'gpt-5',
+      claude: 'claude',
+      gemini: 'gemini',
+    };
+    const model = modelKey ? modelMap[modelKey] : 'brainz-local';
+    const { data } = await api.post<ChatResponse>('/api/chat', { message, modelKey, model, projectId, conversationId } as ChatRequest);
     return data;
   } catch (error: any) {
     const status = error?.response?.status;

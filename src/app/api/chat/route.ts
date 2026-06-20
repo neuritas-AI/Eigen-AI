@@ -14,6 +14,14 @@ function createFallbackResponse(message: string) {
   return `The AI backend is currently unavailable, but your prompt was received: "${normalized}". Please try again when the live model endpoint is reachable.`;
 }
 
+function createFallbackBody(message: string) {
+  return {
+    success: false,
+    error: 'AI backend temporarily unavailable',
+    response: createFallbackResponse(message),
+  };
+}
+
 export async function POST(request: Request) {
   const session: any = await auth();
   if (!session?.user) {
@@ -23,8 +31,30 @@ export async function POST(request: Request) {
   const body = await request.json();
   const message = typeof body.message === 'string' ? body.message : '';
   const conversationId = typeof body.conversationId === 'string' ? body.conversationId : undefined;
-  const modelKey = typeof body.modelKey === 'string' ? body.modelKey : 'brainz_local';
   const projectId = typeof body.projectId === 'string' ? body.projectId : undefined;
+  const requestedModel = typeof body.model === 'string'
+    ? body.model
+    : typeof body.modelKey === 'string'
+    ? body.modelKey
+    : 'brainz-local';
+
+  const modelMap: Record<string, string> = {
+    'brainz-local': 'llama3',
+    'gpt-5': 'gpt-5',
+    'gpt5': 'gpt-5',
+    claude: 'claude-3-5-sonnet',
+    gemini: 'gemini-1.5-pro',
+  };
+
+  const modelKeyMap: Record<string, string> = {
+    'brainz-local': 'brainz_local',
+    'gpt-5': 'gpt5',
+    'gpt5': 'gpt5',
+    claude: 'claude',
+    gemini: 'gemini',
+  };
+
+  console.log('Selected model:', requestedModel);
 
   if (!message) {
     return NextResponse.json({ error: 'Message is required' }, { status: 400 });
@@ -57,13 +87,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 });
   }
 
-  let modelProvider = await prisma.modelProvider.findUnique({ where: { key: modelKey } });
+  const requestedModelKey = modelKeyMap[requestedModel] ?? 'brainz_local';
+  let modelProvider = await prisma.modelProvider.findUnique({ where: { key: requestedModelKey } });
   if (!modelProvider || !modelProvider.active) {
     modelProvider = await prisma.modelProvider.findFirst({ where: { key: 'brainz_local' } });
   }
 
   const actualModelKey = modelProvider?.key ?? 'brainz_local';
   const creditsUsed = modelProvider?.pricePerMsg ?? 1;
+  const resolvedModel = modelProvider && modelProvider.active ? modelMap[requestedModel] || 'llama3' : 'llama3';
+
+  console.log('Resolved model:', resolvedModel);
 
   const project = projectId
     ? await prisma.project.findUnique({ where: { id: projectId } })
@@ -90,14 +124,14 @@ export async function POST(request: Request) {
 
   try {
     const openAiPayload = {
-      model: 'gpt-5',
+      model: resolvedModel,
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.2,
       max_tokens: 1000,
     };
 
     const ollamaPayload = {
-      model: actualModelKey === 'brainz_local' ? 'llama3' : actualModelKey,
+      model: resolvedModel,
       prompt,
       stream: false,
     };
@@ -166,12 +200,13 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json({ response: answer, conversationId: conversation?.id ?? conversationId });
-  } catch {
-    const answer = createFallbackResponse(message);
+  } catch (error: any) {
+    console.error('AI chat request failed:', error);
+    const fallbackData = createFallbackBody(message);
     const updatedMessages = [
       ...recordMessages,
       { role: 'user', content: message },
-      { role: 'assistant', content: answer },
+      { role: 'assistant', content: fallbackData.response },
     ];
 
     if (conversation) {
@@ -200,13 +235,13 @@ export async function POST(request: Request) {
         userId: user.id,
         modelKey: actualModelKey,
         prompt: message,
-        response: answer,
+        response: fallbackData.response,
         creditsUsed,
         tokensUsed: null,
         projectId,
       },
     });
 
-    return NextResponse.json({ response: answer }, { status: 200 });
+    return NextResponse.json(fallbackData, { status: 200 });
   }
 }
